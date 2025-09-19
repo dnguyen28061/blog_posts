@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Node.js Blog</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1, h2 { color: #0056b3; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input[type="text"],
+        .form-group textarea {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-group textarea { resize: vertical; min-height: 100px; }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn:hover { background-color: #0056b3; }
+        .post-list { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
+        .post-list-item {
+            background: #e9ecef;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .post-list-item h3 { margin: 0; color: #333; cursor: pointer; }
+        .post-list-item h3:hover { text-decoration: underline; }
+        .post-detail { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; display: none; }
+        .post-detail h2 { margin-top: 0; }
+        .post-detail p { line-height: 1.6; }
+        .actions button { margin-left: 10px; }
+        .database-selector { margin-bottom: 20px; }
+        .database-selector label { font-weight: bold; margin-right: 10px; }
+        .database-selector select { padding: 8px; border-radius: 4px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Node.js Blog Application</h1>
+
+        <div class="database-selector">
+            <label for="db-select">Select Database:</label>
+            <select id="db-select">
+                <option value="pg">PostgreSQL</option>
+                <option value="mongo">MongoDB</option>
+                <option value="cassandra">Cassandra</option>
+            </select>
+        </div>
+
+        <div id="post-form-section">
+            <h2>Create/Edit Post</h2>
+            <form id="post-form">
+                <input type="hidden" id="post-id">
+                <div class="form-group">
+                    <label for="title">Title:</label>
+                    <input type="text" id="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="author">Author:</label>
+                    <input type="text" id="author" required>
+                </div>
+                <div class="form-group">
+                    <label for="content">Content:</label>
+                    <textarea id="content" required></textarea>
+                </div>
+                <button type="submit" class="btn">Save Post</button>
+                <button type="button" class="btn" id="cancel-edit" style="display:none;">Cancel Edit</button>
+            </form>
+        </div>
+
+        <div class="post-list-section">
+            <h2>All Posts</h2>
+            <div id="posts-list" class="post-list">
+                <!-- Posts will be loaded here -->
+                <div class="post-list-item">
+                    <h3>Example Post Title</h3>
+                    <div class="actions">
+                        <button class="btn edit-btn">Edit</button>
+                        <button class="btn delete-btn">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="post-detail-section" class="post-detail">
+            <h2 id="detail-title"></h2>
+            <p><strong>Author:</strong> <span id="detail-author"></span></p>
+            <p id="detail-content"></p>
+            <button class="btn" id="back-to-list">Back to List</button>
+        </div>
+    </div>
+
+    <script>
+        // Placeholder for JavaScript logic
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Frontend UI loaded. JavaScript logic to be implemented.');
+
+            const dbSelect = document.getElementById('db-select');
+            const postForm = document.getElementById('post-form');
+            const postIdInput = document.getElementById('post-id');
+            const titleInput = document.getElementById('title');
+            const authorInput = document.getElementById('author');
+            const contentInput = document.getElementById('content');
+            const postsList = document.getElementById('posts-list');
+            const postDetailSection = document.getElementById('post-detail-section');
+            const detailTitle = document.getElementById('detail-title');
+            const detailAuthor = document.getElementById('detail-author');
+            const detailContent = document.getElementById('detail-content');
+            const backToListBtn = document.getElementById('back-to-list');
+            const cancelEditBtn = document.getElementById('cancel-edit');
+
+            let currentDatabase = dbSelect.value;
+
+            dbSelect.addEventListener('change', (event) => {
+                currentDatabase = event.target.value;
+                console.log(`Database switched to: ${currentDatabase}`);
+                // Future: Implement logic to fetch posts from the selected database
+            });
+
+            postForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const postId = postIdInput.value;
+                const postData = {
+                    title: titleInput.value,
+                    author: authorInput.value,
+                    content: contentInput.value
+                };
+
+                if (postId) {
+                    console.log(`Attempting to update post ${postId} in ${currentDatabase} with data:`, postData);
+                    // Future: Implement PUT request
+                } else {
+                    console.log(`Attempting to create new post in ${currentDatabase} with data:`, postData);
+                    // Future: Implement POST request
+                }
+                // Clear form
+                postForm.reset();
+                postIdInput.value = '';
+                cancelEditBtn.style.display = 'none';
+            });
+
+            cancelEditBtn.addEventListener('click', () => {
+                postForm.reset();
+                postIdInput.value = '';
+                cancelEditBtn.style.display = 'none';
+                document.querySelector('button[type="submit"]').textContent = 'Save Post';
+            });
+
+            // Placeholder for loading all posts
+            function loadPosts() {
+                console.log(`Loading posts from ${currentDatabase}...`);
+                postsList.innerHTML = '<div class="post-list-item"><h3>No posts yet.</h3></div>';
+                // Future: Implement GET /api/posts/db_type
+            }
+
+            // Placeholder for viewing a single post
+            function viewPost(id) {
+                console.log(`Viewing post ${id} from ${currentDatabase}...`);
+                postDetailSection.style.display = 'block';
+                document.querySelector('.post-list-section').style.display = 'none';
+                document.getElementById('post-form-section').style.display = 'none';
+                // Future: Implement GET /api/posts/db_type/:id
+                detailTitle.textContent = 'Loading...';
+                detailAuthor.textContent = 'Loading...';
+                detailContent.textContent = 'Loading...';
+            }
+
+            // Placeholder for editing a post
+            function editPost(id) {
+                console.log(`Editing post ${id} from ${currentDatabase}...`);
+                // Future: Implement GET /api/posts/db_type/:id to populate form
+                document.querySelector('button[type="submit"]').textContent = 'Update Post';
+                cancelEditBtn.style.display = 'inline-block';
+            }
+
+            // Placeholder for deleting a post
+            function deletePost(id) {
+                console.log(`Deleting post ${id} from ${currentDatabase}...`);
+                // Future: Implement DELETE /api/posts/db_type/:id
+            }
+
+            postsList.addEventListener('click', (event) => {
+                if (event.target.classList.contains('edit-btn')) {
+                    const postId = event.target.closest('.post-list-item').dataset.id || 'example-id'; // Example ID
+                    editPost(postId);
+                } else if (event.target.classList.contains('delete-btn')) {
+                    const postId = event.target.closest('.post-list-item').dataset.id || 'example-id'; // Example ID
+                    if (confirm('Are you sure you want to delete this post?')) {
+                        deletePost(postId);
+                    }
+                } else if (event.target.tagName === 'H3') {
+                    const postId = event.target.closest('.post-list-item').dataset.id || 'example-id'; // Example ID
+                    viewPost(postId);
+                }
+            });
+
+            backToListBtn.addEventListener('click', () => {
+                postDetailSection.style.display = 'none';
+                document.querySelector('.post-list-section').style.display = 'block';
+                document.getElementById('post-form-section').style.display = 'block';
+                loadPosts(); // Reload posts when returning to list
+            });
+
+            loadPosts(); // Initial load
+        });
+    </script>
+</body>
+</html>
