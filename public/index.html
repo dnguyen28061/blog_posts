@@ -88,13 +88,6 @@
             <h2>All Posts</h2>
             <div id="posts-list" class="post-list">
                 <!-- Posts will be loaded here -->
-                <div class="post-list-item">
-                    <h3>Example Post Title</h3>
-                    <div class="actions">
-                        <button class="btn edit-btn">Edit</button>
-                        <button class="btn delete-btn">Delete</button>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -124,13 +117,10 @@
             const cancelEditBtn = document.getElementById('cancel-edit');
             const savePostBtn = document.querySelector('#post-form button[type="submit"]');
 
-            // For Issue #3, we assume PostgreSQL is selected.
-            // The database switching logic will be implemented in Issue #7.
-            let currentDatabase = 'pg'; 
-            dbSelect.value = currentDatabase; // Set the dropdown to PostgreSQL
+            let currentDatabase = dbSelect.value; // Initialize with the default selected value
 
-            // Disable the database selector for now, re-enable in Issue #7
-            dbSelect.disabled = true;
+            // Re-enable the database selector
+            dbSelect.disabled = false;
 
             // Function to reset the form
             function resetForm() {
@@ -156,7 +146,8 @@
                     posts.forEach(post => {
                         const postItem = document.createElement('div');
                         postItem.classList.add('post-list-item');
-                        postItem.dataset.id = post.id;
+                        // Use post._id for MongoDB, post.id for PostgreSQL
+                        postItem.dataset.id = (currentDatabase === 'mongo' && post._id) ? post._id : post.id;
                         postItem.innerHTML = `
                             <h3>${post.title}</h3>
                             <div class="actions">
@@ -232,6 +223,13 @@
             }
 
             // Event Listeners
+            dbSelect.addEventListener('change', (event) => {
+                currentDatabase = event.target.value;
+                console.log(`Database switched to: ${currentDatabase}`);
+                resetForm(); // Clear form when switching databases
+                loadPosts(); // Load posts from the newly selected database
+            });
+
             postForm.addEventListener('submit', async (event) => {
                 event.preventDefault();
                 const postId = postIdInput.value;
