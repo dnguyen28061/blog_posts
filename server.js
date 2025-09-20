@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const { Pool } = require('pg');
+const mongoose = require('mongoose');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,6 +26,23 @@ pool.connect()
     .catch(err => {
         console.error('Error connecting to PostgreSQL', err.message);
     });
+
+// MongoDB Connection
+mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+})
+    .then(() => console.log('Connected to MongoDB'))
+    .catch(err => console.error('Error connecting to MongoDB', err.message));
+
+// MongoDB Post Schema and Model
+const postSchema = new mongoose.Schema({
+    title: { type: String, required: true },
+    author: { type: String, required: true },
+    content: { type: String, required: true },
+}, { timestamps: true });
+
+const Post = mongoose.model('Post', postSchema);
 
 // Middleware
 app.use(express.json()); // For parsing application/json
@@ -136,6 +154,100 @@ app.delete('/api/posts/pg/:id', async (req, res) => {
         res.status(204).send(); // No content to send back on successful deletion
     } catch (err) {
         console.error(`Error deleting post ${id}:`, err.message);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// API Endpoints for MongoDB
+// Create a new post
+app.post('/api/posts/mongo', async (req, res) => {
+    console.log('POST /api/posts/mongo - Request received');
+    const { title, author, content } = req.body;
+    console.log('Request body:', { title, author, content });
+    try {
+        console.log('Creating new MongoDB post...');
+        const newPost = new Post({ title, author, content });
+        const savedPost = await newPost.save();
+        console.log('MongoDB post created:', savedPost);
+        res.status(201).json(savedPost);
+    } catch (err) {
+        console.error('Error creating MongoDB post:', err.message);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// Get all posts
+app.get('/api/posts/mongo', async (req, res) => {
+    console.log('GET /api/posts/mongo - Request received');
+    try {
+        console.log('Fetching all MongoDB posts...');
+        const posts = await Post.find().sort({ createdAt: -1 });
+        console.log(`Found ${posts.length} MongoDB posts.`);
+        res.status(200).json(posts);
+    } catch (err) {
+        console.error('Error retrieving all MongoDB posts:', err.message);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// Get a single post by ID
+app.get('/api/posts/mongo/:id', async (req, res) => {
+    const { id } = req.params;
+    console.log(`GET /api/posts/mongo/${id} - Request received`);
+    try {
+        console.log(`Fetching MongoDB post by ID (${id})...`);
+        const post = await Post.findById(id);
+        if (!post) {
+            console.log(`MongoDB post with ID ${id} not found.`);
+            return res.status(404).json({ error: 'Post not found' });
+        }
+        console.log(`Found MongoDB post by ID (${id}):`, post);
+        res.status(200).json(post);
+    } catch (err) {
+        console.error(`Error retrieving MongoDB post ${id}:`, err.message);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// Update a post by ID
+app.put('/api/posts/mongo/:id', async (req, res) => {
+    const { id } = req.params;
+    const { title, author, content } = req.body;
+    console.log(`PUT /api/posts/mongo/${id} - Request received. Body:`, { title, author, content });
+    try {
+        console.log(`Updating MongoDB post by ID (${id})...`);
+        const updatedPost = await Post.findByIdAndUpdate(
+            id,
+            { title, author, content },
+            { new: true, runValidators: true }
+        );
+        if (!updatedPost) {
+            console.log(`MongoDB post with ID ${id} not found for update.`);
+            return res.status(404).json({ error: 'Post not found' });
+        }
+        console.log(`MongoDB post updated by ID (${id}):`, updatedPost);
+        res.status(200).json(updatedPost);
+    } catch (err) {
+        console.error(`Error updating MongoDB post ${id}:`, err.message);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// Delete a post by ID
+app.delete('/api/posts/mongo/:id', async (req, res) => {
+    const { id } = req.params;
+    console.log(`DELETE /api/posts/mongo/${id} - Request received`);
+    try {
+        console.log(`Deleting MongoDB post by ID (${id})...`);
+        const deletedPost = await Post.findByIdAndDelete(id);
+        if (!deletedPost) {
+            console.log(`MongoDB post with ID ${id} not found for deletion.`);
+            return res.status(404).json({ error: 'Post not found' });
+        }
+        console.log(`MongoDB post deleted by ID (${id}).`);
+        res.status(204).send();
+    } catch (err) {
+        console.error(`Error deleting MongoDB post ${id}:`, err.message);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
